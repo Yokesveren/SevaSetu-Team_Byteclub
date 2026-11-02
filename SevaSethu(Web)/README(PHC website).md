@@ -301,6 +301,6 @@ Evaluator accounts are provisioned in a seeded demo project and are intentionall
 
 ## 👥 Team
 
-Built by **Team Cantina**
+Built by **Team Byteclub**
 
 
