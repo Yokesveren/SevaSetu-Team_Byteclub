@@ -32,11 +32,11 @@
 
 | Application Build | Target Architecture | APK Direct Download | Minimum OS Version |
 | :--- | :--- | :--- | :--- |
-| 🟢 **ASHASetu Android App (v1.0.0 Debug)** | Universal (`arm64-v8a`, `armeabi-v7a`, `x86_64`) | [**Download ASHASetu APK**](https://github.com/Yokesveren/SevaSetu-Team_Byteclub/releases/latest/download/ashasetu-app-debug.apk) | Android 7.0+ (API 24+) |
+| 🟢 **ASHASetu Android App (v1.0.0 Debug)** | Universal (`arm64-v8a`, `armeabi-v7a`, `x86_64`) | [**Download ASHASetu APK**](https://github.com/Yokesveren/SevaSetu-Team_Byteclub/raw/main/Ashasetu-Androidapp/apk/ashasetu-app-debug.apk) | Android 7.0+ (API 24+) |
 
 ### 📲 How to Download & Install the Android App
 
-1. **Download APK**: Tap [Download ASHASetu APK](https://github.com/Yokesveren/SevaSetu-Team_Byteclub/releases/latest/download/ashasetu-app-debug.apk) on your Android device.
+1. **Download APK**: Tap [Download ASHASetu APK](https://github.com/Yokesveren/SevaSetu-Team_Byteclub/raw/main/Ashasetu-Androidapp/apk/ashasetu-app-debug.apk) on your Android device.
 2. **Enable Unknown Sources**:
    * Open Android **Settings** ➔ **Security** (or **Apps**).
    * Enable **Install Unknown Apps** (or "Allow from this source") for your Web Browser or File Manager.
