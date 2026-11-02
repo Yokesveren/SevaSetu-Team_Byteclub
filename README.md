@@ -1,7 +1,7 @@
 <div align="center">
 
 # SevaSetu — सेवासेतु
-### The offline-first data layer that connects ASHA workers, PHCs and district hospitals in hilly taluks of karnataka.
+### The offline-first data layer that connects ASHA workers, PHCs and district hospitals in hilly taluks of india.
 
 
 ![Offline First](https://img.shields.io/badge/Architecture-Offline--First-138808?style=for-the-badge)
