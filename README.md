@@ -388,4 +388,4 @@ Honest scoping matters more than a long feature list.
 
 ## 👥 Team
 
-Built by **Team Cantina**.
+Built by **Team Byteclub**.
