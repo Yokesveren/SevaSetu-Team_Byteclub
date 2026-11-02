@@ -322,7 +322,7 @@ Microphone (voice input), location (SOS and telemetry), Bluetooth (wearables) an
 
 ## 👥 Team
 
-Built by **Team Cantina** 
+Built by **Team Byteclub** 
 
 
 
