@@ -183,7 +183,7 @@ export default function FirebaseStatusModal({ isOpen, onClose }: FirebaseStatusM
                   type="text"
                   value={config.apiKey}
                   onChange={(e) => setConfig({ ...config, apiKey: e.target.value.trim() })}
-                  placeholder="AIzaSy..."
+                  placeholder="Enter Firebase API Key..."
                   className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:border-phc-blue outline-none font-mono text-xs"
                   required
                 />
