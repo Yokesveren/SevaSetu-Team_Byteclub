@@ -798,7 +798,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                 {activeWorkers.length} Active
               </span>
             </div>
-            <LiveMap height="200px" showSosAlerts={true} />
+            <LiveMap height="480px" showSosAlerts={true} />
           </div>
         </div>
       </div>

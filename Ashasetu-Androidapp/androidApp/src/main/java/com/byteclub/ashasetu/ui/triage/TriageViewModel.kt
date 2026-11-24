@@ -2,10 +2,13 @@ package com.byteclub.ashasetu.ui.triage
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.byteclub.ashasetu.ble.BleConnectionState
+import com.byteclub.ashasetu.ble.WearableVitals
 import com.byteclub.ashasetu.data.local.entity.Patient
 import com.byteclub.ashasetu.data.local.entity.TriageRecord
 import com.byteclub.ashasetu.data.repository.PatientRepository
 import com.byteclub.ashasetu.data.repository.TriageRepository
+import com.byteclub.ashasetu.data.repository.WearableRepository
 import com.byteclub.ashasetu.domain.nlp.SpeechRecognizerManager
 import com.byteclub.ashasetu.domain.nlp.SymptomExtractor
 import com.byteclub.ashasetu.domain.triage.RiskBand
@@ -54,20 +57,34 @@ data class TriageUiState(
     val hemoglobin: String = "",
     val calculatedResult: TriageResult? = null,
     val errorMessage: String? = null,
-    val isSaved: Boolean = false
+    val isSaved: Boolean = false,
+    val wearableBleState: BleConnectionState = BleConnectionState.Idle,
+    val latestWearableVitals: WearableVitals? = null,
+    val smoothedHeartRate: Int? = null,
+    val smoothedSpo2: Int? = null,
+    val smoothedTempC: Float? = null,
+    val isPulseAutofilled: Boolean = false,
+    val isSpo2Autofilled: Boolean = false,
+    val isTempAutofilled: Boolean = false,
+    val userHasManuallyEditedVitals: Boolean = false
 )
 
 @HiltViewModel
 class TriageViewModel @Inject constructor(
     private val patientRepository: PatientRepository,
     private val triageRepository: TriageRepository,
-    private val speechRecognizerManager: SpeechRecognizerManager
+    private val speechRecognizerManager: SpeechRecognizerManager,
+    private val wearableRepository: WearableRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TriageUiState())
     val uiState: StateFlow<TriageUiState> = _uiState
 
     private val patientFormMap = mutableMapOf<String, PatientFormData>()
+
+    private val hrWindow = mutableListOf<Int>()
+    private val spo2Window = mutableListOf<Int>()
+    private val tempWindow = mutableListOf<Float>()
 
     val patients: StateFlow<List<Patient>> = patientRepository.getAllPatients().stateIn(
         scope = viewModelScope,
@@ -97,6 +114,120 @@ class TriageViewModel @Inject constructor(
                 }
             }
         }
+
+        viewModelScope.launch {
+            wearableRepository.connectionState.collect { bleState ->
+                _uiState.value = _uiState.value.copy(wearableBleState = bleState)
+            }
+        }
+
+        viewModelScope.launch {
+            wearableRepository.latestVitals.collect { vitals ->
+                if (vitals != null) {
+                    vitals.heartRateBpm?.let {
+                        hrWindow.add(it)
+                        if (hrWindow.size > 3) hrWindow.removeAt(0)
+                    }
+                    vitals.spo2Percent?.let {
+                        spo2Window.add(it)
+                        if (spo2Window.size > 3) spo2Window.removeAt(0)
+                    }
+                    vitals.temperatureC?.let {
+                        tempWindow.add(it)
+                        if (tempWindow.size > 3) tempWindow.removeAt(0)
+                    }
+
+                    val avgHr = if (hrWindow.isNotEmpty()) hrWindow.average().toInt() else null
+                    val avgSpo2 = if (spo2Window.isNotEmpty()) spo2Window.average().toInt() else null
+                    val avgTempC = if (tempWindow.isNotEmpty()) String.format("%.1f", tempWindow.average()).toFloatOrNull() else null
+
+                    val currentState = _uiState.value
+                    var updatedHr = currentState.heartRateBpm
+                    var updatedSpo2 = currentState.spo2Percent
+                    var updatedTemp = currentState.tempF
+                    var pulseAuto = currentState.isPulseAutofilled
+                    var spo2Auto = currentState.isSpo2Autofilled
+                    var tempAuto = currentState.isTempAutofilled
+
+                    if (!currentState.userHasManuallyEditedVitals) {
+                        if (avgHr != null) {
+                            updatedHr = avgHr.toString()
+                            pulseAuto = true
+                        }
+                        if (avgSpo2 != null) {
+                            updatedSpo2 = avgSpo2.toString()
+                            spo2Auto = true
+                        }
+                        if (avgTempC != null) {
+                            updatedTemp = String.format("%.1f", avgTempC)
+                            tempAuto = true
+                        }
+                    }
+
+                    _uiState.value = currentState.copy(
+                        latestWearableVitals = vitals,
+                        smoothedHeartRate = avgHr,
+                        smoothedSpo2 = avgSpo2,
+                        smoothedTempC = avgTempC,
+                        heartRateBpm = updatedHr,
+                        spo2Percent = updatedSpo2,
+                        tempF = updatedTemp,
+                        isPulseAutofilled = pulseAuto,
+                        isSpo2Autofilled = spo2Auto,
+                        isTempAutofilled = tempAuto
+                    )
+                    reEvaluateTriage()
+                } else {
+                    _uiState.value = _uiState.value.copy(latestWearableVitals = null)
+                }
+            }
+        }
+    }
+
+    fun lockAndUseWearableVitals() {
+        val state = _uiState.value
+        val hr = state.smoothedHeartRate ?: state.latestWearableVitals?.heartRateBpm
+        val spo2 = state.smoothedSpo2 ?: state.latestWearableVitals?.spo2Percent
+        val temp = state.smoothedTempC ?: state.latestWearableVitals?.temperatureC
+
+        var newHr = state.heartRateBpm
+        var newSpo2 = state.spo2Percent
+        var newTemp = state.tempF
+        var pAuto = state.isPulseAutofilled
+        var sAuto = state.isSpo2Autofilled
+        var tAuto = state.isTempAutofilled
+
+        if (hr != null) {
+            newHr = hr.toString()
+            pAuto = true
+        }
+        if (spo2 != null) {
+            newSpo2 = spo2.toString()
+            sAuto = true
+        }
+        if (temp != null) {
+            newTemp = String.format("%.1f", temp)
+            tAuto = true
+        }
+
+        _uiState.value = state.copy(
+            heartRateBpm = newHr,
+            spo2Percent = newSpo2,
+            tempF = newTemp,
+            isPulseAutofilled = pAuto,
+            isSpo2Autofilled = sAuto,
+            isTempAutofilled = tAuto,
+            userHasManuallyEditedVitals = false
+        )
+        reEvaluateTriage()
+    }
+
+    fun connectWearable() {
+        wearableRepository.startScanAndConnect()
+    }
+
+    fun disconnectWearable() {
+        wearableRepository.disconnect()
     }
 
     fun selectPatient(patient: Patient) {
@@ -197,7 +328,8 @@ class TriageViewModel @Inject constructor(
         tempF: String = _uiState.value.tempF,
         respRatePerMin: String = _uiState.value.respRatePerMin,
         fetalHeartRate: String = _uiState.value.fetalHeartRate,
-        hemoglobin: String = _uiState.value.hemoglobin
+        hemoglobin: String = _uiState.value.hemoglobin,
+        fromUser: Boolean = true
     ) {
         _uiState.value = _uiState.value.copy(
             bpSystolic = bpSystolic,
@@ -208,6 +340,7 @@ class TriageViewModel @Inject constructor(
             respRatePerMin = respRatePerMin,
             fetalHeartRate = fetalHeartRate,
             hemoglobin = hemoglobin,
+            userHasManuallyEditedVitals = if (fromUser) true else _uiState.value.userHasManuallyEditedVitals,
             isSaved = false
         )
         reEvaluateTriage()

@@ -2,6 +2,7 @@ package com.byteclub.ashasetu.ui.triage
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -24,11 +25,19 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Bluetooth
+import androidx.compose.material.icons.filled.BluetoothConnected
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.DeviceThermostat
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.MonitorHeart
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -38,6 +47,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -48,9 +58,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -60,18 +68,12 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
-import androidx.compose.material.icons.filled.DeviceThermostat
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.MonitorHeart
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material.icons.filled.WaterDrop
-import androidx.compose.material.icons.filled.Wifi
+import com.byteclub.ashasetu.ble.BleConnectionState
 import com.byteclub.ashasetu.ble.WearableDataSource
 import com.byteclub.ashasetu.data.repository.CloudSyncService
 import com.byteclub.ashasetu.domain.triage.RiskBand
 import com.byteclub.ashasetu.ui.components.RiskBadge
 import com.byteclub.ashasetu.ui.theme.*
-import com.byteclub.ashasetu.ui.wearable.EcgWaveformGraph
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,13 +84,12 @@ fun TriageCaptureScreen(
     onNavigateBack: () -> Unit,
     onNavigateToReferral: () -> Unit,
     onNavigateToSos: (() -> Unit)? = null,
+    onNavigateToWearables: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     val uiState by viewModel.uiState.collectAsState()
     val patients by viewModel.patients.collectAsState()
-    val wearableState by (wearableDataSource?.connectionState ?: remember { kotlinx.coroutines.flow.flowOf(null) }).collectAsState(initial = null)
 
     var patientDropdownExpanded by remember { mutableStateOf(false) }
     var languageDropdownExpanded by remember { mutableStateOf(false) }
@@ -100,6 +101,33 @@ fun TriageCaptureScreen(
     ) { isGranted ->
         if (isGranted) {
             viewModel.toggleVoiceRecording()
+        }
+    }
+
+    val blePermissions = remember {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)
+        } else {
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.BLUETOOTH)
+        }
+    }
+
+    val blePermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissionsMap ->
+        if (permissionsMap.values.all { it }) {
+            viewModel.connectWearable()
+        }
+    }
+
+    fun startBleConnectWithCheck() {
+        val hasPermissions = blePermissions.all {
+            ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+        }
+        if (hasPermissions) {
+            viewModel.connectWearable()
+        } else {
+            blePermissionLauncher.launch(blePermissions)
         }
     }
 
@@ -184,157 +212,174 @@ fun TriageCaptureScreen(
                 }
             }
 
-            // Hardware SOS Trigger Emergency Banner
-            if (wearableState?.sosTriggered == true) {
-                item {
-                    Spacer(modifier = Modifier.height(14.dp))
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = RedUrgentBg)
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
+            // BLE Wearable Live Stream & Auto-Fill Card
+            item {
+                Spacer(modifier = Modifier.height(14.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = CardWhite)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.Warning, contentDescription = null, tint = RedUrgent, modifier = Modifier.size(28.dp))
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("🚨 HARDWARE SOS BUTTON PRESSED!", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = RedUrgent)
+                                Icon(
+                                    imageVector = if (uiState.wearableBleState is BleConnectionState.Connected) Icons.Default.BluetoothConnected else Icons.Default.Bluetooth,
+                                    contentDescription = null,
+                                    tint = if (uiState.wearableBleState is BleConnectionState.Connected) GreenSynced else TextMuted,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = if (uiState.wearableBleState is BleConnectionState.Connected) "ASHASetu-Wearable BLE" else "Wearable Disconnected",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = NavyPrimary
+                                )
                             }
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text("Emergency hardware signal received from ESP32 wearable on patient: ${wearableState?.patientName ?: "YOKES"} (ID: ${wearableState?.patientId ?: "01201"}).", fontSize = 12.sp, color = TextPrimary)
-                            Spacer(modifier = Modifier.height(10.dp))
-                            Button(
-                                onClick = { onNavigateToSos?.invoke() },
-                                colors = ButtonDefaults.buttonColors(containerColor = RedUrgent),
-                                shape = RoundedCornerShape(10.dp),
-                                modifier = Modifier.fillMaxWidth()
+
+                            val (statusText, statusBg, statusColor) = when (uiState.wearableBleState) {
+                                is BleConnectionState.Connected -> Triple("BLE CONNECTED", GreenSyncedBg, GreenSynced)
+                                is BleConnectionState.Scanning -> Triple("SCANNING...", YellowModerateBg, NavyPrimary)
+                                is BleConnectionState.Connecting -> Triple("CONNECTING...", YellowModerateBg, NavyPrimary)
+                                else -> Triple("OFFLINE", OffWhiteBg, TextMuted)
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(statusBg)
+                                    .padding(horizontal = 8.dp, vertical = 3.dp)
                             ) {
-                                Text("TRIGGER 108 EMERGENCY SOS DISPATCH", fontWeight = FontWeight.Bold)
+                                Text(
+                                    text = statusText,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = statusColor
+                                )
                             }
                         }
-                    }
-                }
-            }
 
-            // ESP32 IoT Wearable Stream & Auto-Fill Card
-            wearableState?.let { wState ->
-                item {
-                    Spacer(modifier = Modifier.height(14.dp))
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = CardWhite)
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = Icons.Default.Wifi,
-                                        contentDescription = null,
-                                        tint = if (wState.isConnected) GreenSynced else TextMuted,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        text = if (wState.isConnected) "ESP32 Wearable Live Stream" else "ESP32 Wearable Disconnected",
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 14.sp,
-                                        color = NavyPrimary
-                                    )
-                                }
-                                Box(
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        if (uiState.wearableBleState is BleConnectionState.Connected) {
+                            val v = uiState.latestWearableVitals
+
+                            if (v != null && !v.fingerPresent) {
+                                Card(
                                     modifier = Modifier
-                                        .clip(RoundedCornerShape(6.dp))
-                                        .background(if (wState.isConnected) GreenSyncedBg else YellowModerateBg)
-                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                        .fillMaxWidth()
+                                        .padding(bottom = 10.dp),
+                                    shape = RoundedCornerShape(10.dp),
+                                    colors = CardDefaults.cardColors(containerColor = YellowModerateBg)
                                 ) {
-                                    Text(
-                                        text = if (wState.isConnected) "192.168.4.1/api/vitals" else "Wi-Fi Hotspot: IOT_WEARABLE",
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (wState.isConnected) GreenSynced else NavyPrimary
-                                    )
+                                    Row(
+                                        modifier = Modifier.padding(10.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(Icons.Default.Warning, contentDescription = null, tint = YellowModerate, modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text("Place finger on wearable sensor", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = NavyPrimary)
+                                    }
                                 }
                             }
 
-                            Spacer(modifier = Modifier.height(10.dp))
-
-                            if (wState.isConnected) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text("SpO2", fontSize = 11.sp, color = TextSecondary)
-                                        Text("${wState.spo2}%", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = GreenSynced)
-                                    }
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text("Pulse", fontSize = 11.sp, color = TextSecondary)
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Icon(Icons.Default.Favorite, contentDescription = null, tint = RedUrgent, modifier = Modifier.size(14.dp))
-                                            Spacer(modifier = Modifier.width(2.dp))
-                                            Text("${wState.heartRate} bpm", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                                        }
-                                    }
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text("Temp", fontSize = 11.sp, color = TextSecondary)
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Icon(Icons.Default.DeviceThermostat, contentDescription = null, tint = OrangeAccent, modifier = Modifier.size(14.dp))
-                                            Spacer(modifier = Modifier.width(2.dp))
-                                            Text("${String.format("%.1f", wState.temperature)}°C", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                                        }
-                                    }
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text("ECG Raw", fontSize = 11.sp, color = TextSecondary)
-                                        Text("${wState.ecgRaw}", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = NavyPrimary)
-                                    }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text("SpO2", fontSize = 11.sp, color = TextSecondary)
+                                    Text(
+                                        text = uiState.smoothedSpo2?.let { "$it%" } ?: v?.spo2Percent?.let { "$it%" } ?: "--",
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = GreenSynced
+                                    )
                                 }
-
-                                Spacer(modifier = Modifier.height(10.dp))
-
-                                EcgWaveformGraph(ecgPoints = wState.ecgHistory)
-
-                                Spacer(modifier = Modifier.height(12.dp))
-
-                                Button(
-                                    onClick = {
-                                        viewModel.onVitalChanged(
-                                            heartRateBpm = wState.heartRate.toString(),
-                                            spo2Percent = wState.spo2.toString(),
-                                            tempF = String.format("%.1f", wState.temperature)
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text("Pulse", fontSize = 11.sp, color = TextSecondary)
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Default.Favorite, contentDescription = null, tint = RedUrgent, modifier = Modifier.size(14.dp))
+                                        Spacer(modifier = Modifier.width(2.dp))
+                                        Text(
+                                            text = uiState.smoothedHeartRate?.let { "$it bpm" } ?: v?.heartRateBpm?.let { "$it bpm" } ?: "--",
+                                            fontSize = 18.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = TextPrimary
                                         )
-                                    },
-                                    colors = ButtonDefaults.buttonColors(containerColor = NavyPrimary),
-                                    shape = RoundedCornerShape(10.dp),
-                                    modifier = Modifier.fillMaxWidth().height(42.dp)
-                                ) {
-                                    Icon(Icons.Default.MonitorHeart, contentDescription = null, modifier = Modifier.size(18.dp))
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("AUTO-FILL VITALS FROM WEARABLE", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    }
                                 }
-                            } else {
-                                Text(
-                                    text = "Connect phone Wi-Fi to 'IOT_WEARABLE' hotspot (Pass: 12345678) to pull real-time sensor vitals.",
-                                    fontSize = 12.sp,
-                                    color = TextSecondary
-                                )
-                                Spacer(modifier = Modifier.height(10.dp))
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text("Temp (°C)", fontSize = 11.sp, color = TextSecondary)
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Default.DeviceThermostat, contentDescription = null, tint = OrangeAccent, modifier = Modifier.size(14.dp))
+                                        Spacer(modifier = Modifier.width(2.dp))
+                                        Text(
+                                            text = uiState.smoothedTempC?.let { String.format("%.1f°C", it) } ?: v?.temperatureC?.let { String.format("%.1f°C", it) } ?: "--",
+                                            fontSize = 18.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = TextPrimary
+                                        )
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Button(
-                                    onClick = {
-                                        scope.launch {
-                                            wearableDataSource?.connectToWifiWearable()
-                                        }
-                                    },
+                                    onClick = { viewModel.lockAndUseWearableVitals() },
                                     colors = ButtonDefaults.buttonColors(containerColor = NavyPrimary),
                                     shape = RoundedCornerShape(10.dp),
-                                    modifier = Modifier.fillMaxWidth().height(40.dp)
+                                    modifier = Modifier.weight(1f).height(42.dp)
                                 ) {
-                                    Icon(Icons.Default.Wifi, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(6.dp))
-                                    Text("CONNECT TO ESP32 WI-FI STREAM", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    Text("AUTO-FILL FORM", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                                }
+
+                                OutlinedButton(
+                                    onClick = { onNavigateToWearables?.invoke() },
+                                    shape = RoundedCornerShape(10.dp),
+                                    modifier = Modifier.height(42.dp)
+                                ) {
+                                    Icon(Icons.Default.AddAPhoto, contentDescription = null, modifier = Modifier.size(16.dp), tint = NavyPrimary)
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("SEND PHOTO", color = NavyPrimary, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                                }
+                            }
+                        } else {
+                            Text(
+                                text = "Pair with ASHASetu-Wearable over BLE to stream live pulse, SpO2 & temperature, or relay medical photos offline.",
+                                fontSize = 12.sp,
+                                color = TextSecondary
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Button(
+                                    onClick = { startBleConnectWithCheck() },
+                                    colors = ButtonDefaults.buttonColors(containerColor = NavyPrimary),
+                                    shape = RoundedCornerShape(10.dp),
+                                    modifier = Modifier.weight(1f).height(40.dp)
+                                ) {
+                                    Icon(Icons.Default.Bluetooth, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("CONNECT BLE WEARABLE", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                                }
+
+                                OutlinedButton(
+                                    onClick = { onNavigateToWearables?.invoke() },
+                                    shape = RoundedCornerShape(10.dp),
+                                    modifier = Modifier.height(40.dp)
+                                ) {
+                                    Icon(Icons.Default.AddAPhoto, contentDescription = null, modifier = Modifier.size(16.dp), tint = NavyPrimary)
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("SEND PHOTO", color = NavyPrimary, fontWeight = FontWeight.Bold, fontSize = 11.sp)
                                 }
                             }
                         }
@@ -514,16 +559,16 @@ fun TriageCaptureScreen(
                         color = TextPrimary
                     )
 
-                    val hasVoiceVitals = uiState.bpSystolic.isNotBlank() || uiState.spo2Percent.isNotBlank() || uiState.heartRateBpm.isNotBlank()
-                    if (hasVoiceVitals && uiState.voiceTranscript.isNotBlank()) {
+                    val isAnyWearableAutofill = uiState.isPulseAutofilled || uiState.isSpo2Autofilled || uiState.isTempAutofilled
+                    if (isAnyWearableAutofill) {
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(GreenLowBg)
+                                .background(GreenSyncedBg)
                                 .padding(horizontal = 8.dp, vertical = 4.dp)
                         ) {
                             Text(
-                                text = "✨ Voice Auto-filled",
+                                text = "⚡ From Wearable",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = GreenSynced
@@ -531,7 +576,7 @@ fun TriageCaptureScreen(
                         }
                     } else {
                         Text(
-                            text = "(Auto-filled from Voice / Editable)",
+                            text = "(Editable)",
                             fontSize = 11.sp,
                             color = TextMuted
                         )
@@ -572,7 +617,15 @@ fun TriageCaptureScreen(
                             OutlinedTextField(
                                 value = uiState.spo2Percent,
                                 onValueChange = { viewModel.onVitalChanged(spo2Percent = it) },
-                                label = { Text("SpO2 (%)") },
+                                label = {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text("SpO2 (%)")
+                                        if (uiState.isSpo2Autofilled) {
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text("⚡ From wearable", fontSize = 10.sp, color = GreenSynced, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                },
                                 placeholder = { Text("e.g. 98") },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                 singleLine = true,
@@ -581,7 +634,15 @@ fun TriageCaptureScreen(
                             OutlinedTextField(
                                 value = uiState.heartRateBpm,
                                 onValueChange = { viewModel.onVitalChanged(heartRateBpm = it) },
-                                label = { Text("Pulse (bpm)") },
+                                label = {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text("Pulse (bpm)")
+                                        if (uiState.isPulseAutofilled) {
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text("⚡ From wearable", fontSize = 10.sp, color = GreenSynced, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                },
                                 placeholder = { Text("e.g. 72") },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                 singleLine = true,
@@ -593,6 +654,23 @@ fun TriageCaptureScreen(
 
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             OutlinedTextField(
+                                value = uiState.tempF,
+                                onValueChange = { viewModel.onVitalChanged(tempF = it) },
+                                label = {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text("Temp (°C)")
+                                        if (uiState.isTempAutofilled) {
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text("⚡ From wearable", fontSize = 10.sp, color = GreenSynced, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                },
+                                placeholder = { Text("e.g. 37.2") },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                singleLine = true,
+                                modifier = Modifier.weight(1f)
+                            )
+                            OutlinedTextField(
                                 value = uiState.hemoglobin,
                                 onValueChange = { viewModel.onVitalChanged(hemoglobin = it) },
                                 label = { Text("Hb (g/dL)") },
@@ -601,6 +679,11 @@ fun TriageCaptureScreen(
                                 singleLine = true,
                                 modifier = Modifier.weight(1f)
                             )
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             OutlinedTextField(
                                 value = uiState.fetalHeartRate,
                                 onValueChange = { viewModel.onVitalChanged(fetalHeartRate = it) },
@@ -610,6 +693,7 @@ fun TriageCaptureScreen(
                                 singleLine = true,
                                 modifier = Modifier.weight(1f)
                             )
+                            Spacer(modifier = Modifier.weight(1f))
                         }
                     }
                 }
@@ -617,7 +701,7 @@ fun TriageCaptureScreen(
 
             item { Spacer(modifier = Modifier.height(20.dp)) }
 
-            // Calculated Risk Result Card (Only rendered when vitals or voice input are provided)
+            // Calculated Risk Result Card
             val result = uiState.calculatedResult
             if (result != null) {
                 item {

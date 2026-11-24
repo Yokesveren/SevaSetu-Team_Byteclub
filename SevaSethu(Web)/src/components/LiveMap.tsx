@@ -73,7 +73,7 @@ export default function LiveMap({
     return () => unsub();
   }, [showSosAlerts]);
 
-  // Initialize Leaflet map
+  // Initialize Leaflet map and handle container resizing
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
@@ -94,7 +94,28 @@ export default function LiveMap({
       mapInstanceRef.current = map;
     }
 
+    const map = mapInstanceRef.current;
+
+    // Invalidate map size on mount and container size change
+    const t1 = setTimeout(() => map?.invalidateSize(), 100);
+    const t2 = setTimeout(() => map?.invalidateSize(), 400);
+    const t3 = setTimeout(() => map?.invalidateSize(), 800);
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (mapContainerRef.current && typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(() => {
+        map?.invalidateSize();
+      });
+      resizeObserver.observe(mapContainerRef.current);
+    }
+
     return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
@@ -413,8 +434,8 @@ export default function LiveMap({
       </div>
 
       {/* Map Element Container */}
-      <div className="relative flex-1 w-full" style={{ minHeight: height }}>
-        <div ref={mapContainerRef} className="w-full h-full z-0" />
+      <div className="relative flex-1 w-full" style={{ height: height, minHeight: height }}>
+        <div ref={mapContainerRef} className="w-full h-full absolute inset-0 z-0" />
 
         {/* Floating Quick Worker Carousel Overlay at Bottom */}
         <div className="absolute bottom-3 left-3 right-3 z-10 flex gap-2 overflow-x-auto pb-1 pointer-events-auto">

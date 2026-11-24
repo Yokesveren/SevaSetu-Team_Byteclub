@@ -99,7 +99,8 @@ fun AppNavigation(
                 cloudSyncService = cloudSyncService,
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToReferral = { navController.navigate("referrals") },
-                onNavigateToSos = { navController.navigate("sos") }
+                onNavigateToSos = { navController.navigate("sos") },
+                onNavigateToWearables = { navController.navigate("wearables") }
             )
         }
 
