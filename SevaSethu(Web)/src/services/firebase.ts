@@ -15,6 +15,7 @@ import {
   getDocs,
   limit,
 } from "firebase/firestore";
+import { getDatabase, Database } from "firebase/database";
 import { getStorage, FirebaseStorage } from "firebase/storage";
 import { firebaseConfig } from "../firebaseConfig";
 
@@ -56,19 +57,21 @@ const activeConfig = firebaseConfig;
 
 let app: FirebaseApp;
 let db: Firestore;
+let rtdb: Database;
 let storage: FirebaseStorage;
 let isFirebaseInitialized = false;
 
 try {
   app = getApps().length > 0 ? getApp() : initializeApp(activeConfig);
   db = getFirestore(app);
+  rtdb = getDatabase(app);
   storage = getStorage(app);
   isFirebaseInitialized = true;
 } catch (err) {
   console.warn("Firebase initialization warning (using local fallback layer if needed):", err);
 }
 
-export { app, db, storage, isFirebaseInitialized };
+export { app, db, rtdb, storage, isFirebaseInitialized };
 
 /**
  * Probe live Firestore connection

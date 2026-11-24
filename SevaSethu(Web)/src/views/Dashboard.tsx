@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { motion } from "motion/react";
 import {
   Users,
   Clock,
@@ -31,6 +32,7 @@ import {
   Thermometer,
   HeartPulse,
 } from "lucide-react";
+import { PageBand } from "../components/PageBand";
 import { ViewType } from "../types";
 import LiveMap from "../components/LiveMap";
 import { useAuth } from "../auth/AuthContext";
@@ -161,62 +163,66 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
   // ══════════════════════════════════════════════════════════════════════════════
   if (isAdmin) {
     return (
-      <div className="p-6 max-w-[1600px] mx-auto space-y-6">
+      <div className="max-w-[1600px] mx-auto">
         {approvedNotification && (
-          <div className="p-3.5 bg-emerald-50 border border-emerald-300 rounded-xl flex items-center justify-between text-emerald-800 text-xs font-semibold animate-fade-in shadow-xs">
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mx-6 mt-4 p-3.5 bg-[#9fe5cf] border border-[#6cd4b0] rounded-xl flex items-center justify-between text-[#0b2a3c] text-xs font-bold shadow-xs"
+          >
             <div className="flex items-center gap-2">
-              <CheckCircle2 size={16} className="text-emerald-600" />
+              <CheckCircle2 size={16} className="text-[#0b7a75]" />
               <span>{approvedNotification}</span>
             </div>
-            <button onClick={() => setApprovedNotification(null)} className="text-emerald-600 hover:text-emerald-800 cursor-pointer">
+            <button onClick={() => setApprovedNotification(null)} className="text-[#0b7a75] hover:text-[#0b2a3c] cursor-pointer">
               ✕
             </button>
-          </div>
+          </motion.div>
         )}
 
-        {/* Admin Page Header */}
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <span className="px-2.5 py-0.5 bg-[#0A2540] text-amber-300 text-[10.5px] font-mono font-bold rounded">
-                PHC ADMIN CONSOLE
-              </span>
-              <span className="text-xs text-slate-500 font-sans">
-                Authority: <strong>{user?.name || "Shri Rajesh Verma"}</strong> (Administrative Officer)
-              </span>
+        {/* Admin Page Band */}
+        <PageBand
+          tone="ward"
+          title="PHC Command"
+          subtitle={`Sahayadri Taluk · ${today}`}
+          lead={`Administrative console · ${user?.name || "PHC Administrator"} · Karnataka Health Mission`}
+          badge={
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0b2a3c] text-[#9fe5cf] text-[10.5px] font-black uppercase tracking-wider">
+              <Radio size={10} className="animate-pulse" />
+              Admin Console
+            </span>
+          }
+          aside={
+            <div className="flex flex-col gap-2 items-end">
+              <motion.button
+                whileTap={{ scale: 0.94 }}
+                onClick={() => onNavigate("admin-doctors")}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0b2a3c] text-white text-[12.5px] font-bold hover:bg-[#0f3449] transition-colors cursor-pointer shadow-xs"
+              >
+                <Plus size={14} />
+                Register Doctor
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.94 }}
+                onClick={() => onNavigate("asha")}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0b7a75] text-white text-[12.5px] font-bold hover:bg-[#0d918c] transition-colors cursor-pointer shadow-xs"
+              >
+                <UserCheck size={14} />
+                Manage ASHA Cadre
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.94 }}
+                onClick={() => onNavigate("inventory")}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-600 text-white text-[12.5px] font-bold hover:bg-amber-700 transition-colors cursor-pointer shadow-xs"
+              >
+                <Package size={14} />
+                e-Aushadhi Stock
+              </motion.button>
             </div>
-            <h1 className="font-display font-bold text-phc-text text-2xl leading-tight mt-1">
-              PHC Administrative &amp; Facility Command
-            </h1>
-            <p className="text-phc-muted text-[13px] mt-1 font-sans">
-              {today} &nbsp;·&nbsp; Danapur Block Administration &nbsp;·&nbsp; National Health Mission Operations
-            </p>
-          </div>
+          }
+        />
 
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => onNavigate("admin-doctors")}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-phc-blue text-white text-[12.5px] font-display font-semibold hover:bg-phc-blue-dark transition-colors cursor-pointer shadow-xs"
-            >
-              <Plus size={14} />
-              Register Doctor / Staff
-            </button>
-            <button
-              onClick={() => onNavigate("asha")}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-700 text-white text-[12.5px] font-display font-semibold hover:bg-emerald-800 transition-colors cursor-pointer shadow-xs"
-            >
-              <UserCheck size={14} />
-              Manage ASHA Cadre
-            </button>
-            <button
-              onClick={() => onNavigate("inventory")}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-600 text-white text-[12.5px] font-display font-semibold hover:bg-amber-700 transition-colors cursor-pointer shadow-xs"
-            >
-              <Package size={14} />
-              e-Aushadhi / Drug Stock
-            </button>
-          </div>
-        </div>
+        <div className="p-6 space-y-6">
 
         {/* Admin KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -462,6 +468,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
             </div>
           </div>
         </div>
+        </div>
       </div>
     );
   }
@@ -470,51 +477,52 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
   // 2. DOCTOR DASHBOARD VIEW (Clinical Command, Live Triage & OPD Queue)
   // ══════════════════════════════════════════════════════════════════════════════
   return (
-    <div className="p-6 max-w-[1600px] mx-auto space-y-6">
-      {/* Doctor Page Header */}
-      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <span className="px-2.5 py-0.5 bg-[#1B4F8A] text-white text-[10.5px] font-mono font-bold rounded">
-              CLINICAL WORKSTATION
-            </span>
-            <span className="text-xs text-slate-500 font-sans">
-              Medical Officer: <strong>{user?.name || "Dr. Aravind Kumar"}</strong> (MOIC)
-            </span>
+    <div className="max-w-[1600px] mx-auto">
+      {/* Doctor Page Band */}
+      <PageBand
+        tone="linen"
+        title="Clinical Desk"
+        subtitle={`${today} · Morning OPD`}
+        lead={`Medical Officer: ${user?.name || "Dr. Aravind"} · Live ASHA Telemetry & Triage`}
+        badge={
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0b7a75] text-white text-[10.5px] font-black uppercase tracking-wider">
+            <Activity size={10} className="animate-pulse" />
+            Clinical Workstation
+          </span>
+        }
+        aside={
+          <div className="flex flex-col gap-2 items-end">
+            {activeSos.length > 0 && (
+              <motion.button
+                whileTap={{ scale: 0.94 }}
+                onClick={() => onNavigate("sos")}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#c4242a] text-white text-[12.5px] font-bold hover:bg-red-800 transition-colors cursor-pointer shadow-xs urgent-flash border-2 border-[#c4242a]"
+              >
+                <AlertTriangle size={14} />
+                SOS Console ({activeSos.length})
+              </motion.button>
+            )}
+            <motion.button
+              whileTap={{ scale: 0.94 }}
+              onClick={() => onNavigate("triage")}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#0b2a3c] text-white text-[12.5px] font-bold hover:bg-[#0f3449] transition-colors cursor-pointer shadow-xs"
+            >
+              <Plus size={14} />
+              Triage Workspace
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.94 }}
+              onClick={() => onNavigate("appointments")}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#0b7a75] text-white text-[12.5px] font-bold hover:bg-[#0d918c] transition-colors cursor-pointer shadow-xs"
+            >
+              <Calendar size={14} />
+              Start OPD Queue
+            </motion.button>
           </div>
-          <h1 className="font-display font-bold text-phc-text text-2xl leading-tight mt-1">
-            Medical Officer Clinical Command
-          </h1>
-          <p className="text-phc-muted text-[13px] mt-1 font-sans">
-            {today} &nbsp;·&nbsp; Morning Shift (OPD) &nbsp;·&nbsp; Live Clinical Telemetry &amp; ASHA Triage
-          </p>
-        </div>
+        }
+      />
 
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => onNavigate("sos")}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600 text-white text-[12.5px] font-display font-bold hover:bg-red-700 transition-colors cursor-pointer shadow-xs"
-          >
-            <AlertTriangle size={14} />
-            SOS Console ({activeSos.length})
-          </button>
-          <button
-            onClick={() => onNavigate("triage")}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-phc-blue text-white text-[12.5px] font-display font-semibold hover:bg-phc-blue-dark transition-colors cursor-pointer shadow-xs"
-          >
-            <Plus size={14} />
-            Triage Workspace
-          </button>
-          <button
-            onClick={() => onNavigate("appointments")}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-700 text-white text-[12.5px] font-display font-semibold hover:bg-emerald-800 transition-colors cursor-pointer shadow-xs"
-          >
-            <Calendar size={14} />
-            Start OPD Queue
-          </button>
-        </div>
-      </div>
-
+      <div className="p-6 space-y-6">
       {/* Doctor KPI cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
@@ -801,6 +809,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
             <LiveMap height="200px" showSosAlerts={true} />
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

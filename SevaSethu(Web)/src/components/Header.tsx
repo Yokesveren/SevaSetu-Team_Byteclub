@@ -58,6 +58,8 @@ const NOTIFICATIONS = [
 ];
 
 import { NationalEmblem, TricolorRibbon } from "./GovEmblem";
+import { useDeadDropSync } from "../services/useDeadDropSync";
+import { Radio } from "lucide-react";
 
 const PHCLogo = () => (
   <div className="flex items-center gap-2.5">
@@ -88,6 +90,7 @@ export default function Header({ onNavigate }: HeaderProps) {
   const [showProfile, setShowProfile] = useState(false);
   const [lang, setLang] = useState<"en" | "hi" | "ta">("hi");
   const [fontScale, setFontScale] = useState(100);
+  const { uplinkStatus } = useDeadDropSync();
 
   // Live Firebase Subscriptions for Doctor / Admin notifications
   const [sosAlerts, setSosAlerts] = useState<SOSAlertDoc[]>([]);
@@ -195,32 +198,45 @@ export default function Header({ onNavigate }: HeaderProps) {
   };
 
   return (
-    <div className="flex flex-col flex-shrink-0 z-40">
+    <div className="flex flex-col flex-shrink-0 z-40 hidden lg:flex">
       <TricolorRibbon className="h-1 w-full" />
-      <header className="bg-phc-surface border-b border-phc-border shadow-xs flex items-center px-5 h-16 z-40 flex-shrink-0">
+      <header className="bg-white border-b border-[#e1e7ec] shadow-xs flex items-center px-5 h-14 z-40 flex-shrink-0">
         {/* Brand */}
-        <div className="flex items-center gap-2 w-64 flex-shrink-0">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <PHCLogo />
         </div>
 
         {/* PHC identity — center */}
         <div className="flex-1 flex flex-col items-center gap-0.5">
-          <div className="font-display font-semibold text-phc-text text-sm leading-none">
-            Patna Rural Primary Health Centre (PHC)
+          <div className="font-display font-bold text-[#0b2a3c] text-sm leading-none tracking-tight">
+            Primary Health Centre · ಪ್ರಾಥಮಿಕ ಆರೋಗ್ಯ ಕೇಂದ್ರ
           </div>
-          <div className="text-[11px] text-phc-muted font-sans leading-none">
-            Danapur Block &nbsp;·&nbsp; Patna District &nbsp;·&nbsp; Bihar
+          <div className="text-[11px] text-[#56636b] font-sans leading-none">
+            Sahayadri Taluk &nbsp;·&nbsp; Karnataka &nbsp;·&nbsp; NHM
             &nbsp;&nbsp;
-            <span className="font-mono text-phc-subtle text-[10px]">HMIS: BR-PAT-PHC-042</span>
+            <span className="font-mono text-[#8a9aa6] text-[10px]">HMIS: KA-SAHA-PHC-001</span>
           </div>
         </div>
 
         {/* Right controls */}
         <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Live DeadDrop Uplink Badge if active */}
+          {uplinkStatus && (
+            <div
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[11px] font-display font-bold bg-amber-50 border-amber-300 text-amber-900 shadow-xs select-none"
+              title={`Emergency Gateway: dev:${uplinkStatus.activeGatewayDevice} (${uplinkStatus.gatewayUserName})`}
+            >
+              <Radio size={13} className="text-amber-600 animate-pulse" />
+              <span>
+                Uplink: dev:{uplinkStatus.activeGatewayDevice} ({uplinkStatus.gatewayUserName}) · {uplinkStatus.totalOpsPushed} ops
+              </span>
+            </div>
+          )}
+
           {/* Firebase Live Connection — always connected */}
           <div
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[11px] font-display font-bold bg-emerald-50 border-emerald-300 text-emerald-800 shadow-xs select-none"
-            title="Connected to Firebase Firestore: seva-sethu-1ae78"
+            title="Connected to Firebase Firestore & RTDB: seva-sethu-1ae78"
           >
             <Flame size={13} className="text-emerald-600" />
             <span>seva-sethu-1ae78</span>
