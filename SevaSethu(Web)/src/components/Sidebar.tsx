@@ -38,13 +38,6 @@ const ICON_PATHS: Record<string, string> = {
   settings:  "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z",
   "design-system": "M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5",
   out:       "M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10",
-  // ── DeadDrop icon paths ──────────────────────────────────────────
-  "dd-overview":           "M12 2L2 7l10 5 10-5-10-5M2 17l10 5 10-5M2 12l10 5 10-5",
-  "dd-missing-persons":    "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M12 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 11l-4 4 4 4",
-  "dd-shelter-occupancy":  "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM9 22V12h6v10",
-  "dd-supply-ledger":      "M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z",
-  "dd-field-nodes":        "M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01",
-  "dd-crypto-audit":       "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
 };
 
 function SvgIcon({ id }: { id: string }) {
@@ -84,15 +77,6 @@ interface NavItem {
   badgeColor?: "red" | "amber" | "blue";
   roles: Role[];
 }
-
-const DD_NAV_ITEMS: NavItem[] = [
-  { id: "dd-overview",          label: "Command Center",    roles: ["ADMIN", "DOCTOR"] },
-  { id: "dd-missing-persons",   label: "Missing Persons",   roles: ["ADMIN", "DOCTOR"] },
-  { id: "dd-shelter-occupancy", label: "Shelter Grid",      roles: ["ADMIN", "DOCTOR"] },
-  { id: "dd-supply-ledger",     label: "Supply Ledger",     roles: ["ADMIN", "DOCTOR"] },
-  { id: "dd-field-nodes",       label: "Field Nodes",       roles: ["ADMIN", "DOCTOR"] },
-  { id: "dd-crypto-audit",      label: "Crypto & Audit",    roles: ["ADMIN", "DOCTOR"] },
-];
 
 const NAV_ITEMS: NavItem[] = [
   { id: "dashboard",           label: "Dashboard",      roles: ["ADMIN", "DOCTOR"] },
@@ -189,36 +173,26 @@ export default function Sidebar({ activeView, onNavigate, role }: SidebarProps) 
   const now = new Date();
   const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: false });
 
-  const ddItems = DD_NAV_ITEMS.filter((n) => n.roles.includes(role));
+  const allItems = [...NAV_ITEMS, ...BOTTOM_ITEMS];
   const main   = NAV_ITEMS.filter((n) => n.roles.includes(role));
   const bottom = BOTTOM_ITEMS.filter((n) => n.roles.includes(role));
-
-  const isDeadDropActive = (activeView as string).startsWith("dd-");
 
   return (
     <MotionConfig reducedMotion="user">
       <aside
-        className="sidebar-root flex-shrink-0 hidden lg:flex flex-col overflow-y-auto"
+        className="sidebar-root flex-shrink-0 hidden lg:flex flex-col"
         style={{ width: "248px" }}
         aria-label="Primary navigation"
       >
         {/* Logo mark */}
         <div className="flex items-center gap-3 px-4 pt-5 mb-4">
-          {isDeadDropActive ? (
-            /* DeadDrop hexagon mark */
-            <svg viewBox="0 0 30 30" width={30} height={30} aria-hidden>
-              <polygon points="15,2 27,8.5 27,21.5 15,28 3,21.5 3,8.5" fill="#EF4444" />
-              <text x="15" y="20" textAnchor="middle" fill="white" fontSize="11" fontWeight="900">⬡</text>
-            </svg>
-          ) : (
-            <BridgeMark size={30} />
-          )}
+          <BridgeMark size={30} />
           <div>
             <span className="text-[17px] font-black uppercase tracking-[-0.04em] text-white leading-none block">
-              {isDeadDropActive ? "DeadDrop HQ" : "SeVaSetu"}
+              SeVaSetu
             </span>
             <span className="text-[10px] text-[#7a98a8] leading-none tracking-wide">
-              {isDeadDropActive ? "Emergency Command" : "ಸೇವಾಸೇತು · PHC Portal"}
+              ಸೇವಾಸೇತು · PHC Portal
             </span>
           </div>
         </div>
@@ -262,33 +236,10 @@ export default function Sidebar({ activeView, onNavigate, role }: SidebarProps) 
           )}
         </div>
 
-        {/* ── DeadDrop HQ Section ────────────────────────────────────── */}
-        <div className="px-2 mb-1">
-          <div className="flex items-center gap-2 px-2 mb-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse flex-shrink-0" />
-            <p className="text-[10px] font-bold tracking-widest text-red-400 uppercase">
-              ⬡ DeadDrop HQ
-            </p>
-          </div>
-          <nav className="flex flex-col gap-0.5">
-            {ddItems.map((item) => (
-              <NavPill
-                key={item.id}
-                item={item}
-                active={activeView === item.id}
-                onNavigate={onNavigate}
-              />
-            ))}
-          </nav>
-        </div>
-
-        {/* Divider */}
-        <div className="mx-3 my-3 border-t border-white/10" />
-
-        {/* Main nav — SevaSethu */}
+        {/* Main nav */}
         <div className="px-2 mb-1">
           <p className="text-[10px] font-bold tracking-widest text-[#7a98a8] uppercase px-2 mb-2">
-            SeVaSetu PHC
+            Navigation
           </p>
           <nav className="flex flex-col gap-0.5">
             {main.map((item) => (

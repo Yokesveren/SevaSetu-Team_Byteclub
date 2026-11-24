@@ -58,8 +58,6 @@ const NOTIFICATIONS = [
 ];
 
 import { NationalEmblem, TricolorRibbon } from "./GovEmblem";
-import { useDeadDropSync } from "../services/useDeadDropSync";
-import { Radio } from "lucide-react";
 
 const PHCLogo = () => (
   <div className="flex items-center gap-2.5">
@@ -90,7 +88,6 @@ export default function Header({ onNavigate }: HeaderProps) {
   const [showProfile, setShowProfile] = useState(false);
   const [lang, setLang] = useState<"en" | "hi" | "ta">("hi");
   const [fontScale, setFontScale] = useState(100);
-  const { uplinkStatus } = useDeadDropSync();
 
   // Live Firebase Subscriptions for Doctor / Admin notifications
   const [sosAlerts, setSosAlerts] = useState<SOSAlertDoc[]>([]);
@@ -220,19 +217,6 @@ export default function Header({ onNavigate }: HeaderProps) {
 
         {/* Right controls */}
         <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Live DeadDrop Uplink Badge if active */}
-          {uplinkStatus && (
-            <div
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[11px] font-display font-bold bg-amber-50 border-amber-300 text-amber-900 shadow-xs select-none"
-              title={`Emergency Gateway: dev:${uplinkStatus.activeGatewayDevice} (${uplinkStatus.gatewayUserName})`}
-            >
-              <Radio size={13} className="text-amber-600 animate-pulse" />
-              <span>
-                Uplink: dev:{uplinkStatus.activeGatewayDevice} ({uplinkStatus.gatewayUserName}) · {uplinkStatus.totalOpsPushed} ops
-              </span>
-            </div>
-          )}
-
           {/* Firebase Live Connection — always connected */}
           <div
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-[11px] font-display font-bold bg-emerald-50 border-emerald-300 text-emerald-800 shadow-xs select-none"

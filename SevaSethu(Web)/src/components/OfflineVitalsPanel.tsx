@@ -25,8 +25,6 @@ import {
   ZapOff,
 } from "lucide-react";
 import { useOfflineMode, DeviceReading } from "../services/OfflineModeContext";
-import { useDeadDropSync } from "../services/useDeadDropSync";
-import { Radio, Battery } from "lucide-react";
 
 // ── Vitals card ───────────────────────────────────────────────────────────────
 
@@ -101,7 +99,6 @@ export default function OfflineVitalsPanel({
 
   const [syncing, setSyncing] = useState(false);
   const [justSynced, setJustSynced] = useState<DeviceReading | null>(null);
-  const { nodes, uplinkStatus } = useDeadDropSync();
 
   // Records for THIS patient
   const myRecords = syncedRecords.filter((r) => r.patientId === patientId);
@@ -171,66 +168,6 @@ export default function OfflineVitalsPanel({
 
   return (
     <div className="space-y-5">
-      {/* ── DeadDrop Mobile Mesh Telemetry ─────────────────────────── */}
-      <div className="bg-[#0b2a3c] text-white border border-[#133a53] rounded-2xl p-5 shadow-sm space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Radio size={16} className="text-[#9fe5cf]" />
-            <h4 className="font-display font-bold text-white text-[14px]">
-              DeadDrop P2P Mesh Rescuers (Mobile Gateway)
-            </h4>
-          </div>
-          {uplinkStatus && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-bold border border-emerald-400/30">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Gateway: dev:{uplinkStatus.activeGatewayDevice} ({uplinkStatus.gatewayUserName}) · {uplinkStatus.totalOpsPushed} ops
-            </span>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-          {Object.keys(nodes).length === 0 ? (
-            <div className="col-span-3 text-center py-3 text-xs text-slate-400 font-mono">
-              Listening for mobile app nodes on /nodes...
-            </div>
-          ) : (
-            Object.values(nodes).map((node) => {
-              const isOnline = node.onlineStatus === "ONLINE";
-              return (
-                <div
-                  key={node.deviceId}
-                  className="bg-[#133a53] border border-[#1c4b69] rounded-xl p-3 flex flex-col justify-between gap-2"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-[13px] text-white">
-                      dev:{node.deviceId} ({node.userName})
-                    </span>
-                    <span
-                      className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                        isOnline
-                          ? "bg-emerald-500/20 text-emerald-300"
-                          : "bg-slate-500/20 text-slate-300"
-                      }`}
-                    >
-                      {node.onlineStatus}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-slate-300">
-                    <span className="flex items-center gap-1">
-                      <Battery size={12} className={node.batteryPercent < 20 ? "text-red-400" : "text-emerald-400"} />
-                      {node.batteryPercent}%
-                    </span>
-                    <span className="font-mono text-[11px] text-[#9fe5cf]">
-                      {node.totalOpsHeld} ops
-                    </span>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </div>
-
       {/* ── Connection bar ───────────────────────────────────────────── */}
       <div className="flex items-center justify-between bg-white border border-slate-200 rounded-2xl px-5 py-3.5 shadow-xs">
         <div className="flex items-center gap-3">

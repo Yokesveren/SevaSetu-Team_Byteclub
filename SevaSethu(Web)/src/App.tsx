@@ -24,16 +24,8 @@ import RegisterDoctor from "./views/RegisterDoctor";
 import WelcomeScreen from "./components/WelcomeScreen";
 import { EmergencySOSModal, AshaConnectionApprovalModal } from "./components/DoctorNotificationModals";
 import RealtimePatientModal from "./components/RealtimePatientModal";
-import { LocalUplinkBanner } from "./components/LocalUplinkBanner";
 import { useAuth } from "./auth/AuthContext";
 import { ViewType } from "./types";
-// DeadDrop HQ views
-import DDOverview from "./views/deadDrop/Overview";
-import DDMissingPersons from "./views/deadDrop/MissingPersons";
-import DDShelterOccupancy from "./views/deadDrop/ShelterOccupancy";
-import DDSupplyLedger from "./views/deadDrop/SupplyLedger";
-import DDFieldNodes from "./views/deadDrop/FieldNodes";
-import DDCryptoAudit from "./views/deadDrop/CryptoAudit";
 
 /* ── Bridge mark (same as Sidebar, self-contained for the loader) ── */
 function BridgeMark({ size = 48 }: { size?: number }) {
@@ -106,7 +98,7 @@ function AccountNotActive() {
 
 export default function App() {
   const { isAuthenticated, user } = useAuth();
-  const [activeView, setActiveView] = useState<ViewType>("dd-overview");
+  const [activeView, setActiveView] = useState<ViewType>("dashboard");
   const [showWelcome, setShowWelcome] = useState(true);
 
   const navigate = (view: ViewType) => setActiveView(view);
@@ -126,14 +118,6 @@ export default function App() {
     if (user.role === "DOCTOR" && user.status !== "Active") return <AccountNotActive />;
 
     switch (activeView) {
-      // ── DeadDrop HQ ──────────────────────────────────────────────────────
-      case "dd-overview":          return <DDOverview />;
-      case "dd-missing-persons":   return <DDMissingPersons />;
-      case "dd-shelter-occupancy": return <DDShelterOccupancy />;
-      case "dd-supply-ledger":     return <DDSupplyLedger />;
-      case "dd-field-nodes":       return <DDFieldNodes />;
-      case "dd-crypto-audit":      return <DDCryptoAudit />;
-      // ── SevaSethu PHC Portal ──────────────────────────────────────────────
       case "dashboard":           return <Dashboard onNavigate={navigate} />;
       case "patients":            return <Patients />;
       case "triage":              return <Triage />;
@@ -148,7 +132,7 @@ export default function App() {
       case "reports":             return <Reports />;
       case "design-system":       return <DesignSystem />;
       case "settings":            return <Settings />;
-      default:                    return <DDOverview />;
+      default:                    return <Dashboard onNavigate={navigate} />;
     }
   };
 
@@ -179,9 +163,6 @@ export default function App() {
 
         {/* White content sheet */}
         <div className="app-sheet flex flex-col min-w-0">
-          {/* Local network uplink banner from mobile device */}
-          <LocalUplinkBanner />
-
           {/* Sticky top header (inside the sheet) */}
           <Header onNavigate={navigate} />
 
