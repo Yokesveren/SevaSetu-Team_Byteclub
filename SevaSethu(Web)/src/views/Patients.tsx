@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import OfflineVitalsPanel from "../components/OfflineVitalsPanel";
 import {
   subscribePatients,
   PatientDoc,
@@ -55,6 +56,7 @@ import {
   TrendingUp,
   FlaskConical,
   ClipboardCheck,
+  Usb,
 } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -853,7 +855,7 @@ function FullPatientRecordModal({
   onUpdateReferralStatus,
   currentDoctorName = "Dr. Aravind Kumar",
 }: FullRecordModalProps) {
-  const [activeTab, setActiveTab] = useState<"timeline" | "prescriptions" | "labs" | "referral" | "abdm">("timeline");
+  const [activeTab, setActiveTab] = useState<"timeline" | "prescriptions" | "labs" | "referral" | "abdm" | "device">("timeline");
   
   // Modal Form States
   const [showAddEncounter, setShowAddEncounter] = useState(false);
@@ -1117,6 +1119,7 @@ function FullPatientRecordModal({
             { id: "labs",          label: "Lab & Diagnostics (LOINC)", icon: <FlaskConical size={14} />, badge: patient.labReports?.length },
             { id: "referral",      label: "Referral Pathway",         icon: <CornerUpRight size={14} />, alert: !!patient.referral },
             { id: "abdm",          label: "ABDM & FHIR Bundle",      icon: <QrCode size={14} /> },
+            { id: "device",        label: "Device Sync",              icon: <Usb size={14} /> },
           ].map(tab => (
             <button
               key={tab.id}
@@ -1878,8 +1881,7 @@ function FullPatientRecordModal({
           )}
 
           {/* TAB 5: ABDM & FHIR R4 Bundle */}
-          {activeTab === "abdm" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {activeTab === "abdm" && (            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-4">
                 <div className="flex items-center gap-3 border-b pb-3">
                   <QrCode size={22} className="text-phc-blue" />
@@ -1934,6 +1936,14 @@ function FullPatientRecordModal({
                 </button>
               </div>
             </div>
+          )}
+
+          {/* TAB 6: Device Sync (Offline ESP Mode) */}
+          {activeTab === "device" && (
+            <OfflineVitalsPanel
+              patientId={patient.id}
+              patientName={patient.name}
+            />
           )}
 
         </div>

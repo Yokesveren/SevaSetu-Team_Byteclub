@@ -122,38 +122,38 @@ export default function GlobalSOSBanner({ onNavigate }: GlobalSOSBannerProps) {
   };
 
   return (
-    <div className="bg-gradient-to-r from-red-600 via-red-700 to-rose-700 text-white px-4 py-2.5 shadow-xl border-b-2 border-red-400 z-50 animate-in slide-in-from-top duration-200">
+    <div className="urgent-flash border-y-4 border-red-700 bg-red-50 text-[#0b2a3c] px-4 py-2.5 z-50">
       <div className="max-w-[1600px] mx-auto flex flex-wrap items-center justify-between gap-3">
         {/* Left: Emergency Pulse & Description */}
         <div className="flex items-center gap-3 min-w-0">
-          <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-white/20 backdrop-blur-md text-white flex-shrink-0 shadow-inner">
-            <span className="absolute -inset-1 rounded-xl bg-white/40 animate-ping opacity-75"></span>
+          <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-red-600 text-white flex-shrink-0">
+            <span className="absolute -inset-1 rounded-xl bg-red-400 animate-ping opacity-60"></span>
             <Siren size={20} className="animate-bounce text-white" />
           </div>
 
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="bg-white text-red-700 text-[10.5px] font-black font-display uppercase tracking-widest px-2 py-0.5 rounded-full shadow-xs">
+              <span className="bg-red-700 text-white text-[10.5px] font-black font-display uppercase tracking-widest px-2 py-0.5 rounded-full">
                 EMERGENCY SOS DISPATCH
               </span>
-              <span className="font-mono text-xs text-red-100 font-bold">
+              <span className="font-mono text-xs text-red-800 font-bold">
                 {currentAlert.alertId}
               </span>
-              <span className="text-red-200 text-xs hidden md:inline">
+              <span className="text-red-600 text-xs hidden md:inline">
                 · Priority Score: {currentAlert.priorityScore}
               </span>
             </div>
 
-            <div className="text-[13px] font-display font-bold text-white mt-0.5 truncate flex items-center gap-2">
+            <div className="text-[13px] font-display font-bold text-red-900 mt-0.5 truncate flex items-center gap-2">
               <span>{currentAlert.emergencyType.replace(/_/g, " ")}:</span>
-              <span className="text-amber-200 font-semibold">{currentAlert.patientName}</span>
-              <span className="text-red-200 font-normal text-[12px] hidden sm:inline">
+              <span className="text-red-700 font-semibold">{currentAlert.patientName}</span>
+              <span className="text-red-500 font-normal text-[12px] hidden sm:inline">
                 ({currentAlert.age ?? 40}{currentAlert.sex || "M"})
               </span>
-              <span className="text-red-200 text-[12px] flex items-center gap-1">
+              <span className="text-red-500 text-[12px] flex items-center gap-1">
                 <MapPin size={11} /> {currentAlert.region}
               </span>
-              <span className="text-red-200 text-[12px] hidden lg:inline">
+              <span className="text-red-500 text-[12px] hidden lg:inline">
                 · ASHA: <b>{currentAlert.ashaName}</b>
               </span>
             </div>
@@ -165,16 +165,16 @@ export default function GlobalSOSBanner({ onNavigate }: GlobalSOSBannerProps) {
           <button
             onClick={handleAcknowledge}
             disabled={isUpdating}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-900 rounded-lg text-[12px] font-display font-bold transition-all shadow cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#9fe5cf] hover:bg-[#6cd4b0] text-[#0b2a3c] rounded-lg text-[12px] font-display font-bold transition-all shadow cursor-pointer"
           >
             <Radio size={13} className="animate-pulse" />
-            Acknowledge Dispatch
+            Acknowledge
           </button>
 
           <button
             onClick={handleResolve}
             disabled={isUpdating}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg text-[12px] font-display font-bold transition-all shadow cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0b7a75] hover:bg-[#0d918c] text-white rounded-lg text-[12px] font-display font-bold transition-all shadow cursor-pointer"
           >
             <CheckCircle2 size={13} />
             Resolve
@@ -183,7 +183,7 @@ export default function GlobalSOSBanner({ onNavigate }: GlobalSOSBannerProps) {
           {onNavigate && (
             <button
               onClick={() => onNavigate("sos")}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white rounded-lg text-[12px] font-display font-semibold transition-all cursor-pointer backdrop-blur-sm"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-700 hover:bg-red-800 text-white rounded-lg text-[12px] font-display font-semibold transition-all cursor-pointer"
             >
               Open SOS Console
               <ChevronRight size={13} />
@@ -192,7 +192,7 @@ export default function GlobalSOSBanner({ onNavigate }: GlobalSOSBannerProps) {
 
           <button
             onClick={handleDismiss}
-            className="p-1 rounded-lg text-white/70 hover:text-white hover:bg-white/20 transition-colors cursor-pointer"
+            className="p-1 rounded-lg text-red-500 hover:text-red-800 hover:bg-red-100 transition-colors cursor-pointer"
             title="Dismiss from top banner"
           >
             <X size={15} />

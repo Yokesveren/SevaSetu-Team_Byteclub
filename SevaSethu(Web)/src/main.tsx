@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App'
 import './index.css'
 import { AuthProvider } from './auth/AuthContext'
+import { OfflineModeProvider } from './services/OfflineModeContext'
 
 const originalError = console.error;
 console.error = (...args) => {
@@ -21,7 +22,9 @@ window.addEventListener('error', (event) => {
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <AuthProvider>
-      <App />
+      <OfflineModeProvider>
+        <App />
+      </OfflineModeProvider>
     </AuthProvider>
   </React.StrictMode>,
 )
