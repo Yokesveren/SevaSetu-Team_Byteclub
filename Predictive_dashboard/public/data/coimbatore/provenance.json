@@ -1,0 +1,11 @@
+{
+  "source": "OpenStreetMap, bundled GeoJSON export derived from sixteen direct OSM API map extracts",
+  "bbox": [76.945, 10.995, 76.985, 11.035],
+  "focus": "Gandhipuram and central Coimbatore, Tamil Nadu",
+  "center": [76.9677744, 11.0182714],
+  "retrieved": "2026-11-24",
+  "attribution": "© OpenStreetMap contributors",
+  "license": "ODbL 1.0",
+  "notes": "Buildings, roads, water, land use, places and points of interest render only from these bundled files; no live Overpass or OSM fetches at runtime. Building heights without OSM tags are deterministic 4–8 m estimates seeded from the feature id.",
+  "healthFacilities": "Facility names and geometry come from OSM, including Coimbatore Medical College Hospital. Their services, referral relationships, travel times and capacity are unverified; no PHC or sub-centre is invented."
+}

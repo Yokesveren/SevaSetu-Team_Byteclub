@@ -22,9 +22,11 @@
 | Resource | Link |
 | :--- | :--- |
 | 🌐 **Deployed PHC Web Portal** | [**Open the live web app →**](https://sevasethu-web.vercel.app/) |
-| 📱 **ASHASetu Android App Repo** | [**View Ashasetu-Androidapp directory →**](https://github.com/Yokesveren/SevaSetu-Team_Byteclub/tree/main/Ashasetu-Androidapp) |
+| 📱 **ASHASetu Android App download** | [**Download the app →**](https://github.com/Yokesveren/SevaSetu-Team_Byteclub/raw/main/Ashasetu-Androidapp/apk/ashasetu-app-debug.apk) |
 | 🎬 **Video 1: Project Walkthrough / Demo** | [**Watch on YouTube →**](https://www.youtube.com/watch?v=ap-gmuTtrpQ) |
 | 🎬 **Video 2: Animated demo** | [**Watch on YouTube →**](https://www.youtube.com/watch?v=CpFEbZ00S2Y) |
+| 🌐 **Predictive dashboard** | [**Open the live web app →**](https://seva-village-health-twin.lovable.app/) |
+
 
 ---
 

@@ -1,0 +1,5 @@
+import type { Geography } from './geo';
+const CACHE_KEY='coimbatore-gandhipuram-bundled-osm-v2';
+function database(): Promise<IDBDatabase> {return new Promise((resolve,reject)=>{const r=indexedDB.open('sevasetu-geography',1);r.onupgradeneeded=()=>r.result.createObjectStore('maps');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
+export async function readGeography(): Promise<Geography|null> {try{const db=await database();return await new Promise(resolve=>{const r=db.transaction('maps').objectStore('maps').get(CACHE_KEY);r.onsuccess=()=>{db.close();resolve(r.result??null);};r.onerror=()=>{db.close();resolve(null);};});}catch{return null;}}
+export async function cacheGeography(geo: Geography): Promise<void> {try{const db=await database();await new Promise<void>(resolve=>{const tx=db.transaction('maps','readwrite');tx.objectStore('maps').put(geo,CACHE_KEY);tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>{db.close();resolve();};});}catch{/* Offline storage may be disabled. */}}

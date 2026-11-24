@@ -975,6 +975,20 @@ export async function deleteTriageCaseDoc(caseId: string): Promise<void> {
 }
 
 /**
+ * Permanently deletes a patient document from Firestore.
+ */
+export async function deletePatientRecord(patientId: string): Promise<void> {
+  if (isFirebaseInitialized && db) {
+    try {
+      const docRef = doc(db, "patients", patientId);
+      await deleteDoc(docRef);
+    } catch (err) {
+      console.warn("Error deleting patient from Firestore:", err);
+    }
+  }
+}
+
+/**
  * 9. Subscribe to SOS Alerts (`sos_alerts`)
  */
 export function subscribeSOSAlerts(
